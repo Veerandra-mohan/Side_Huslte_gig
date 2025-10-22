@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route, NavLink, Outlet, useNavigate, useOutletContext } from 'react-router-dom';
  
 const communityToTags = {
     'Rajahmundry': ['#local', '#event', '#food', '#homemade'],
@@ -100,9 +101,9 @@ const AuthPage = ({ onLogin }) => {
                     <button className="login-btn" type="submit">{isLogin ? 'Sign In' : 'Create Account'}</button>
                 </form>
                 <div className="login-footer">
-                    <a href="#" onClick={() => setIsLogin(!isLogin)}>
+                    <button className="link-button" onClick={() => setIsLogin(!isLogin)}>
                         {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -245,9 +246,10 @@ const GigChatView: React.FC<{ gig: Gig; onBack: () => void }> = ({ gig, onBack }
     );
 };
 
-const CommunityForum = ({ gigs, onViewChat }) => {
+const CommunityForum = () => {
     const communities = ['Rajahmundry', 'College Students', 'Developers', 'Designers'];
     const [active, setActive] = useState('Rajahmundry');
+    const { gigs, onViewChat } = useOutletContext<OutletContextType>();
     const filteredGigs = gigs.filter(gig => {
         const relevantTags = communityToTags[active];
         if (!relevantTags) return false;
@@ -267,7 +269,8 @@ const CommunityForum = ({ gigs, onViewChat }) => {
     );
 }
 
-const UserProfile = ({ gigs, onViewChat, currentUser }) => {
+const UserProfile = () => {
+    const { gigs, onViewChat, currentUser } = useOutletContext<OutletContextType>();
     const myGigs = gigs.filter(gig => gig.user === currentUser.name);
     return (
         <div className="user-profile-page">
@@ -286,30 +289,40 @@ const UserProfile = ({ gigs, onViewChat, currentUser }) => {
     );
 };
 
-const FreelanceForum = ({ gigs, openCreateView, onViewChat }) => (
-    <>
-        <section className="hero-section">
-            <h2>Find Your Next Opportunity</h2><p>Connect with local talent, find gigs, or hire professionals.</p>
-            <div className="hero-actions"><button className="hero-btn primary">Find a Gig</button><button className="hero-btn secondary">Hire a Freelancer</button></div>
-        </section>
-        <main className="main-content">
-            <header className="header">
-                <h1>Freelancing Forum</h1>
-                <button className="create-post-btn" onClick={openCreateView}>+ Create Post</button>
-            </header>
-            <section>
-                <div className="gig-list">{gigs.map(gig => <GigPost key={gig.id} gig={gig} onViewChat={onViewChat} />)}</div>
-            </section>
-        </main>
-    </>
-);
+interface OutletContextType {
+    gigs: Gig[];
+    openCreateView: () => void;
+    onViewChat: (gig: Gig) => void;
+    currentUser: User;
+}
 
-const AppHeader = ({ activeSection, setActiveSection, currentUser }) => {
+const FreelanceForum = () => {
+    const { gigs, openCreateView, onViewChat } = useOutletContext<OutletContextType>();
+    return (
+        <>
+            <section className="hero-section">
+                <h2>Find Your Next Opportunity</h2><p>Connect with local talent, find gigs, or hire professionals.</p>
+                <div className="hero-actions"><button className="hero-btn primary">Find a Gig</button><button className="hero-btn secondary">Hire a Freelancer</button></div>
+            </section>
+            <main className="main-content">
+                <header className="header">
+                    <h1>Freelancing Forum</h1>
+                    <button className="create-post-btn" onClick={openCreateView}>+ Create Post</button>
+                </header>
+                <section>
+                    <div className="gig-list">{gigs.map(gig => <GigPost key={gig.id} gig={gig} onViewChat={onViewChat} />)}</div>
+                </section>
+            </main>
+        </>
+    );
+};
+
+const AppHeader = ({ currentUser }) => {
     const navItems = ['Freelancing Forum', 'Community Forum', 'User Profile'];
     return (
         <header className="app-header">
             <div className="logo">GigConnect</div>
-            <nav className="main-nav"><ul>{navItems.map(item => (<li key={item} className={activeSection === item ? 'active' : ''}><button onClick={() => setActiveSection(item)}>{item}</button></li>))}</ul></nav>
+            <nav className="main-nav"><ul>{navItems.map(item => (<li key={item}><NavLink to={`/${item.toLowerCase().replace(/\s+/g, '-')}`}>{item}</NavLink></li>))}</ul></nav>
             <div className="header-right"><div className="user-menu"><span>{currentUser.name}</span></div></div>
         </header>
     );
@@ -318,7 +331,7 @@ const AppHeader = ({ activeSection, setActiveSection, currentUser }) => {
 const InfoSidebar = ({ currentUser }) => (
     <aside className="info-sidebar">
         <div className="info-card wallet-card">
-            <h4>My Wallet</h4><div className="balance-amount">₹{currentUser.wallet}</div><p className="balance-label">Available Balance</p>
+            <h4>My Wallet</h4><div className="balance-amount">₹{currentUser.wallet.toLocaleString()}</div><p className="balance-label">Available Balance</p>
             <div className="wallet-actions"><button>+ Add Funds</button><button>Withdraw</button></div>
         </div>
         <div className="info-card profile-card">
@@ -332,11 +345,25 @@ const InfoSidebar = ({ currentUser }) => (
     </aside>
 );
 
-const MainApp = ({ currentUser }) => {
-    const [gigs, setGigs] = useState<Gig[]>(initialGigs);
+const AppLayout = ({ currentUser }) => {
+    const [gigs, setGigs] = useState<Gig[]>([]);
+    const [isLoadingGigs, setIsLoadingGigs] = useState(true);
     const [isCreatingGig, setIsCreatingGig] = useState(false);
-    const [activeSection, setActiveSection] = useState('Freelancing Forum');
     const [selectedGig, setSelectedGig] = useState<Gig | null>(null);
+    const navigate = useNavigate();
+
+    // Fetch gigs on component mount
+    useEffect(() => {
+        // Simulate fetching gigs from a backend API
+        const fetchGigs = async () => {
+            console.log("Fetching gigs from backend...");
+            // In a real app: const response = await fetch(`${process.env.REACT_APP_API_URL}/api/gigs`);
+            // const data = await response.json();
+            setGigs(initialGigs); // Using mock data for now
+            setIsLoadingGigs(false);
+        };
+        fetchGigs();
+    }, []);
 
     const handleCreateGig = (newGigData: NewGigData) => {
         const newGig: Gig = {
@@ -345,36 +372,32 @@ const MainApp = ({ currentUser }) => {
             time: 'Just now',
             ...newGigData
         };
+        // Simulate POST request to backend
+        // In a real app: await fetch(`${process.env.REACT_APP_API_URL}/api/gigs', { method: 'POST', body: JSON.stringify(newGig), ... });
+        console.log("Posting new gig to backend:", newGig);
+        initialGigs.unshift(newGig); // Add to our mock data source
         setGigs([newGig, ...gigs]);
         setIsCreatingGig(false);
     };
 
     const handleViewChat = (gig: Gig) => setSelectedGig(gig);
-    const handleBack = () => {
-        setSelectedGig(null);
-        setIsCreatingGig(false);
-    }
-
-    const renderSection = () => {
-        if (isCreatingGig) {
-            return <CreateGigView closeModal={() => setIsCreatingGig(false)} onCreateGig={handleCreateGig} />;
-        }
-        if (selectedGig) {
-            return <GigChatView gig={selectedGig} onBack={handleBack} />;
-        }
-        switch (activeSection) {
-            case 'Freelancing Forum': return <FreelanceForum gigs={gigs} openCreateView={() => setIsCreatingGig(true)} onViewChat={handleViewChat} />;
-            case 'Community Forum': return <CommunityForum gigs={gigs} onViewChat={handleViewChat} />;
-            case 'User Profile': return <UserProfile gigs={gigs} onViewChat={handleViewChat} currentUser={currentUser} />;
-            default: return <FreelanceForum gigs={gigs} openCreateView={() => setIsCreatingGig(true)} onViewChat={handleViewChat} />;
-        }
-    }
+    const handleBack = () => setSelectedGig(null);
 
     return (
         <div className="main-app-container">
-            <AppHeader activeSection={activeSection} setActiveSection={setActiveSection} currentUser={currentUser} />
+            <AppHeader currentUser={currentUser} />
             <div className="main-app-content-wrapper">
-                <div className="main-content-column">{renderSection()}</div>
+                <div className="main-content-column">
+                    {isLoadingGigs ? (
+                        <div>Loading gigs...</div>
+                    ) : isCreatingGig ? (
+                        <CreateGigView closeModal={() => setIsCreatingGig(false)} onCreateGig={handleCreateGig} />
+                    ) : selectedGig ? (
+                        <GigChatView gig={selectedGig} onBack={handleBack} />
+                    ) : (
+                        <Outlet context={{ gigs, openCreateView: () => setIsCreatingGig(true), onViewChat: handleViewChat, currentUser }} />
+                    )}
+                </div>
                 {!selectedGig && !isCreatingGig && <InfoSidebar currentUser={currentUser} />}
             </div>
         </div>
@@ -384,8 +407,22 @@ const MainApp = ({ currentUser }) => {
 const App = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-    if (!currentUser) { return <AuthPage onLogin={setCurrentUser} />; }
-    return <MainApp currentUser={currentUser} />;
+    if (!currentUser) { 
+        return <AuthPage onLogin={setCurrentUser} />; 
+    }
+
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<AppLayout currentUser={currentUser} />}>
+                    <Route index element={<FreelanceForum />} />
+                    <Route path="freelancing-forum" element={<FreelanceForum />} />
+                    <Route path="community-forum" element={<CommunityForum />} />
+                    <Route path="user-profile" element={<UserProfile />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
 };
 
 const container = document.getElementById('root');
