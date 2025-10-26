@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "description": "",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "ts-node-esm server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
     "dev": "nodemon --delay 1 --exec ts-node-esm server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
