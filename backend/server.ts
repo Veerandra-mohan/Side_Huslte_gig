@@ -1,4 +1,6 @@
-import express from 'express';
+// File: backend/server.ts
+
+import express, { Request, Response, NextFunction } from 'express'; // <-- CHANGED
 import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { MongoClient, Db } from 'mongodb';
@@ -43,13 +45,19 @@ async function connectToDb() {
 connectToDb().then(() => {
     app.use(express.json());
 
-    const authenticateJWT = (req, res, next) => {
+    // v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v
+    // CHANGED: Added types for req, res, and next
+    const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
+    // ^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^
         const authHeader = req.headers.authorization;
 
         if (authHeader) {
             const token = authHeader.split(' ')[1];
 
-            jwt.verify(token, jwtSecret, (err, user) => {
+            // v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v--v
+            // CHANGED: Added types for err and user
+            jwt.verify(token, jwtSecret, (err: any, user: any) => {
+            // ^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^--^
                 if (err) {
                     return res.sendStatus(403);
                 }
@@ -62,7 +70,7 @@ connectToDb().then(() => {
         }
     };
 
-    app.post('/api/register', async (req, res) => {
+    app.post('/api/register', async (req: Request, res: Response) => {
         try {
             const { username, email, password } = req.body;
             if (!username || !email || !password) {
@@ -85,7 +93,7 @@ connectToDb().then(() => {
         }
     });
 
-    app.post('/api/login', async (req, res) => {
+    app.post('/api/login', async (req: Request, res: Response) => {
         try {
             const { email, password } = req.body;
             if (!email || !password) {
@@ -112,7 +120,7 @@ connectToDb().then(() => {
         }
     });
 
-    app.post('/api/gigs', authenticateJWT, async (req, res) => {
+    app.post('/api/gigs', authenticateJWT, async (req: Request, res: Response) => {
         try {
             const { title, description, price, tags } = req.body;
             if (!title || !description || !price || !tags) {
@@ -120,6 +128,7 @@ connectToDb().then(() => {
             }
 
             const gigsCollection = db.collection('gigs');
+            // This line below will work now thanks to the types.d.ts file
             const newGig = { title, description, price, tags, createdAt: new Date(), userId: req.user.userId };
             const result = await gigsCollection.insertOne(newGig);
 
@@ -139,7 +148,7 @@ connectToDb().then(() => {
         }
     });
 
-    app.get('/api/gigs', authenticateJWT, async (req, res) => {
+    app.get('/api/gigs', authenticateJWT, async (req: Request, res: Response) => {
         try {
             const gigsCollection = db.collection('gigs');
             const gigs = await gigsCollection.find({}).sort({ createdAt: -1 }).toArray();
