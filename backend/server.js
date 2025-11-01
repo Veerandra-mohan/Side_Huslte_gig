@@ -11,14 +11,14 @@ const { Server } = require('socket.io');
 
 const io = new Server(server, {
   cors: {
-    origin: [process.env.FRONTEND_URL || 'http://localhost:5173', 'http://localhost:5174'],
+    origin: [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'].filter(Boolean),
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
 const corsOptions = {
-  origin: [process.env.FRONTEND_URL || 'http://localhost:5173', 'http://localhost:5174'],
+  origin: [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'].filter(Boolean),
   optionsSuccessStatus: 200, // For legacy browser support
   credentials: true
 };
@@ -39,8 +39,9 @@ const Gig = require('./models/Gig');
 const authRoutes = require('./routes/auth');
 const messageRoutes = require('./routes/messages');
 const gigRoutes = require('./routes/gigs');
-app.use('/api/users', authRoutes); // Corrected from /api/auth to match frontend requests
+app.use('/api/auth', authRoutes);
 app.use('/api/gigs', gigRoutes);
+app.use('/api/messages', messageRoutes);
 
 // track connected users (simple in-memory map: userId -> socketId)
 const onlineUsers = new Map();
@@ -89,5 +90,5 @@ io.on('connection', socket => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
