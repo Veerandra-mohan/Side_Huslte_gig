@@ -1,0 +1,29 @@
+services:
+  # Backend Service (Node.js)
+  - type: web
+    name: side-hustle-backend
+    env: node
+    rootDir: backend
+    plan: free # or your desired plan
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: MONGO_URI
+        fromDatabase:
+          name: side-hustle-db # Make sure this matches the name of your Render Database
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true # Let Render generate a secure secret
+      - key: FRONTEND_URL
+        fromService:
+          type: static_site
+          name: side-hustle-frontend
+          property: url
+
+  # Frontend Service (React Static Site)
+  - type: static_site
+    name: side-hustle-frontend
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
