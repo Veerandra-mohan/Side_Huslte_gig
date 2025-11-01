@@ -36,9 +36,11 @@ const Message = require('./models/Message');
 const Gig = require('./models/Gig');
 
 // routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/messages', require('./routes/messages'));
-app.use('/api/gigs', require('./routes/gigs'));
+const authRoutes = require('./routes/auth');
+const messageRoutes = require('./routes/messages');
+const gigRoutes = require('./routes/gigs');
+app.use('/api/users', authRoutes); // Corrected from /api/auth to match frontend requests
+app.use('/api/gigs', gigRoutes);
 
 // track connected users (simple in-memory map: userId -> socketId)
 const onlineUsers = new Map();
