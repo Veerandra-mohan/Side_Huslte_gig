@@ -8,30 +8,35 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 const { Server } = require('socket.io');
-
-const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'].filter(Boolean);
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
+const allowedOrigins = [
+  "https://side-huslte-gig-frontend.onrender.com", // Exact frontend Render URL
+  "http://localhost:5173",
+  "http://localhost:5174"
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or preflights)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
+
+    const normalizedOrigin = origin.replace(/\/$/, ""); // remove trailing slash
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    } else {
+      console.error("❌ Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
     }
-    return callback(null, true);
   },
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  optionsSuccessStatus: 200, // For legacy browser support
-  credentials: true
-};
-app.use(cors(corsOptions));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-auth-token"],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}));
 app.use(express.json());
 
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ['GET', 'POST'],
-    credentials: true
   }
 });
 
