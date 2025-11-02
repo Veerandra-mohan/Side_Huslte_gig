@@ -17,8 +17,17 @@ const io = new Server(server, {
   }
 });
 
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'].filter(Boolean);
+
 const corsOptions = {
-  origin: [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'].filter(Boolean),
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
+    }
+    return callback(null, true);
+  },
   optionsSuccessStatus: 200, // For legacy browser support
   credentials: true
 };
@@ -40,6 +49,11 @@ const authRoutes = require('./routes/auth');
 const messageRoutes = require('./routes/messages');
 const gigRoutes = require('./routes/gigs');
 app.use('/api/auth', authRoutes);
+
+app.get("/", (req, res) => {
+  res.send("Backend is running ✅");
+});
+
 app.use('/api/gigs', gigRoutes);
 app.use('/api/messages', messageRoutes);
 

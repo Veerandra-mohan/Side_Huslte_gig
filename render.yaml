@@ -15,10 +15,9 @@ services:
       - key: JWT_SECRET
         generateValue: true # Let Render generate a secure secret
       - key: FRONTEND_URL
-        fromService:
-          type: static_site
-          name: side-hustle-frontend
-          property: url
+        value: "https://side-hustle-frontend.onrender.com" # Your frontend URL for CORS
+      - key: PORT
+        value: 5000
 
   # Frontend Service (React Static Site)
   - type: static_site
@@ -27,3 +26,9 @@ services:
     plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: side-hustle-backend
+          property: url
