@@ -28,6 +28,7 @@ const corsOptions = {
     }
     return callback(null, true);
   },
+  methods: ["GET", "POST", "PUT", "DELETE"],
   optionsSuccessStatus: 200, // For legacy browser support
   credentials: true
 };

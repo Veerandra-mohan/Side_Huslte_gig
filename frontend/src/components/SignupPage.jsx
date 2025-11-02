@@ -11,13 +11,9 @@ const SignupPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/api/auth/register', { name, username, password });
-      if (response.ok) {
-        alert('Signup successful! Please log in.');
-        navigate('/login');
-      } else {
-        alert(response.data.message || 'Signup failed');
-      }
+      await api.post('/api/auth/register', { name, username, password });
+      alert('Signup successful! Please log in.');
+      navigate('/login');
     } catch (error) {
       console.error('Signup error:', error.response ? error.response.data : error);
       alert(error.response?.data?.message || 'An error occurred during signup.');

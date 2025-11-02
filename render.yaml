@@ -1,7 +1,7 @@
 services:
   # Backend Service (Node.js)
   - type: web
-    name: side-hustle-backend
+    name: side-huslte-gig-backend
     env: node
     rootDir: backend
     plan: free # or your desired plan
@@ -21,7 +21,7 @@ services:
 
   # Frontend Service (React Static Site)
   - type: static_site
-    name: side-hustle-frontend
+    name: side-huslte-gig-frontend
     rootDir: frontend
     plan: free
     buildCommand: npm install && npm run build
@@ -29,6 +29,6 @@ services:
     envVars:
       - key: VITE_API_URL
         fromService:
-          type: web
-          name: side-hustle-backend
+          type: web # This must match the type of the backend service
+          name: side-huslte-gig-backend # This must match the name of the backend service
           property: url
