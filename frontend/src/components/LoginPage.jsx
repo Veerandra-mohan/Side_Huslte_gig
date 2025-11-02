@@ -10,12 +10,8 @@ const LoginPage = ({ onLogin }) => {
     e.preventDefault();
     try {
       const response = await api.post('/api/auth/login', { username, password });
-      if (response.ok) {
-        onLogin(response.data.token);
-      } else {
-        // Axios wraps errors, so we can access response data directly
-        alert(response.data.message || 'Login failed');
-      }
+      // With axios, a successful request (status 2xx) will land here.
+      onLogin(response.data.token);
     } catch (error) {
       console.error('Login error:', error.response ? error.response.data : error);
       alert(error.response?.data?.message || 'An error occurred during login.');
