@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../api';
 
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -8,26 +9,16 @@ const LoginPage = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await api.post('/api/auth/login', { username, password });
       if (response.ok) {
-        const data = await response.json();
-        onLogin(data.token);
+        onLogin(response.data.token);
       } else {
-        const text = await response.text();
-        if (text) {
-          const data = JSON.parse(text);
-          alert(data.message || 'Login failed');
-        } else {
-          alert(`Login failed with status: ${response.status} ${response.statusText}`);
-        }
+        // Axios wraps errors, so we can access response data directly
+        alert(response.data.message || 'Login failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      alert('An error occurred during login.');
+      console.error('Login error:', error.response ? error.response.data : error);
+      alert(error.response?.data?.message || 'An error occurred during login.');
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const SignupPage = () => {
   const [username, setUsername] = useState('');
@@ -10,26 +11,16 @@ const SignupPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, username, password }),
-      });
+      const response = await api.post('/api/auth/register', { name, username, password });
       if (response.ok) {
         alert('Signup successful! Please log in.');
         navigate('/login');
       } else {
-        const text = await response.text();
-        if (text) {
-          const data = JSON.parse(text);
-          alert(data.message || 'Signup failed');
-        } else {
-          alert(`Signup failed with status: ${response.status} ${response.statusText}`);
-        }
+        alert(response.data.message || 'Signup failed');
       }
     } catch (error) {
-      console.error('Signup error:', error);
-      alert('An error occurred during signup.');
+      console.error('Signup error:', error.response ? error.response.data : error);
+      alert(error.response?.data?.message || 'An error occurred during signup.');
     }
   };
 
